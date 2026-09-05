@@ -7,22 +7,25 @@ import { NotFoundPage } from './NotFoundPage';
 export function GuidePostPage() {
   const { slug } = useParams<{ slug: string }>();
   const guide = GUIDES.find((g) => g.slug === slug);
-  if (!guide) return <NotFoundPage />;
 
   usePageMeta({
-    title: guide.title,
-    description: guide.description,
-    path: `/guides/${guide.slug}`,
-    jsonLd: {
-      '@context': 'https://schema.org',
-      '@type': 'Article',
-      headline: guide.title,
-      description: guide.description,
-      author: { '@type': 'Organization', name: SITE.name },
-      publisher: { '@type': 'Organization', name: SITE.name, logo: { '@type': 'ImageObject', url: `${SITE.url}/favicon.svg` } },
-      mainEntityOfPage: `${SITE.url}/guides/${guide.slug}`,
-    },
+    title: guide?.title,
+    description: guide?.description,
+    path: guide ? `/guides/${guide.slug}` : `/guides/${slug ?? ''}`,
+    jsonLd: guide
+      ? {
+          '@context': 'https://schema.org',
+          '@type': 'Article',
+          headline: guide.title,
+          description: guide.description,
+          author: { '@type': 'Organization', name: SITE.name },
+          publisher: { '@type': 'Organization', name: SITE.name, logo: { '@type': 'ImageObject', url: `${SITE.url}/favicon.svg` } },
+          mainEntityOfPage: `${SITE.url}/guides/${guide.slug}`,
+        }
+      : undefined,
   });
+
+  if (!guide) return <NotFoundPage />;
 
   return (
     <article className="container-narrow py-12 max-w-3xl">

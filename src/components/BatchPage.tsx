@@ -24,18 +24,18 @@ export interface BatchFile {
   error?: string;
 }
 
-interface BatchPageProps {
+interface BatchPageProps<TOpts> {
   title: string;
   intro: string;
   /** Per-file processor — produces a ProcessResult (PNG/JPG/WebP) */
-  process: (img: HTMLImageElement, file: BatchFile, options: any) => Promise<ProcessResult>;
+  process: (img: HTMLImageElement, file: BatchFile, options: TOpts) => Promise<ProcessResult>;
   /** Sidebar options UI */
-  Options: React.FC<{ value: any; setValue: (v: any) => void }>;
+  Options: React.FC<{ value: TOpts; setValue: (v: TOpts) => void }>;
   /** Default options */
-  defaultOptions: any;
+  defaultOptions: TOpts;
 }
 
-export function BatchPage({ title, intro, process, Options, defaultOptions }: BatchPageProps) {
+export function BatchPage<TOpts>({ title, intro, process, Options, defaultOptions }: BatchPageProps<TOpts>) {
   const [files, setFiles] = useState<BatchFile[]>([]);
   const [opts, setOpts] = useState(defaultOptions);
   const [running, setRunning] = useState(false);
