@@ -1,0 +1,268 @@
+/**
+ * Editorial guides — useful, factual content for SEO.
+ * Not stuffed with keywords; each guide is genuinely useful.
+ */
+
+export interface Guide {
+  slug: string;
+  title: string;
+  description: string;
+  category: 'background' | 'compress' | 'convert' | 'resize' | 'privacy' | 'formats';
+  readingMinutes: number;
+  intro: string;
+  sections: { heading: string; paragraphs: string[] }[];
+  cta: { label: string; href: string };
+}
+
+export const GUIDES: Guide[] = [
+  {
+    slug: 'how-to-remove-image-background',
+    title: 'How to remove an image background',
+    description: 'A practical guide to removing image backgrounds for product photos, portraits and design assets.',
+    category: 'background',
+    readingMinutes: 5,
+    intro:
+      'Background removal used to require Photoshop and patience. Modern browsers can do it locally with a small AI model. This guide explains when it works well, when it does not, and how to get clean results.',
+    sections: [
+      {
+        heading: 'What is background removal?',
+        paragraphs: [
+          'Background removal (or "image matting") is the process of separating the foreground subject of a photo from everything behind it. The output is usually a PNG with a transparent background — useful for product listings, profile photos, marketing graphics and design assets.',
+          'Traditional approaches use colour ranges or manual selection. AI-based approaches train a model on millions of labelled images and predict, pixel by pixel, whether it belongs to the subject or the background.',
+        ],
+      },
+      {
+        heading: 'When AI background removal works well',
+        paragraphs: [
+          'AI background removal is most reliable when the subject is clearly distinguishable from the background. Product photos on a flat white background, portraits with a clear head-and-shoulders framing, and logos on a plain backdrop all work very well.',
+          'Pixcuro uses an open-source model that runs entirely in your browser, so the photo never leaves your device. The first time you use it, the browser downloads the model (~40 MB). Subsequent uses are instant.',
+        ],
+      },
+      {
+        heading: 'When it does not work well',
+        paragraphs: [
+          'Background removal is harder when the subject blends into the background (think a beige shirt on a cream background), when the subject is partially occluded by busy scenery, or when there is heavy motion blur.',
+          'For these cases, manual cleanup with a tool like Photoshop, GIMP or Photopea is still the right answer. AI is best thought of as a fast first pass — 80% of the work in 2 seconds, with manual cleanup reserved for the tricky edges.',
+        ],
+      },
+      {
+        heading: 'Getting clean edges',
+        paragraphs: [
+          'A few tips help: use a high-resolution source image (the model has more detail to work with); avoid images with heavy compression artefacts; and where possible, use a source where the subject contrasts with the background.',
+          'After removing the background you can place the subject on a new solid colour, a gradient, or a custom image background. Pixcuro keeps the transparent PNG so you can do this later in any other tool.',
+        ],
+      },
+    ],
+    cta: { label: 'Open the Background Remover', href: '/background-remover' },
+  },
+  {
+    slug: 'how-to-compress-images-without-losing-quality',
+    title: 'How to compress images without losing quality',
+    description: 'Practical image compression: how JPG, PNG and WebP differ, and how to shrink files without visible quality loss.',
+    category: 'compress',
+    readingMinutes: 6,
+    intro:
+      'Image compression is one of the highest-impact changes you can make to website performance. This guide explains what each format does and the practical settings that balance size and quality.',
+    sections: [
+      {
+        heading: 'JPG vs PNG vs WebP',
+        paragraphs: [
+          'JPG (JPEG) is a lossy format designed for photographs. It throws away detail the eye cannot easily see and produces small files. It does not support transparency.',
+          'PNG is a lossless format that keeps every pixel exactly as it was. It supports transparency. It produces much larger files than JPG for photographs.',
+          'WebP is a modern format from Google that supports both lossy and lossless compression and transparency. WebP usually beats JPG and PNG on size for the same visual quality.',
+        ],
+      },
+      {
+        heading: 'What quality level should I use?',
+        paragraphs: [
+          'For JPG photos on a website, quality 75–80% is usually indistinguishable from 100% to the human eye but is dramatically smaller.',
+          'For graphics with sharp edges and text (screenshots, UI mockups), PNG or WebP at quality 90%+ usually looks best.',
+          'For maximum size reduction, WebP at quality 80% is a strong default that works for most photos.',
+        ],
+      },
+      {
+        heading: 'Always check the result',
+        paragraphs: [
+          'Never compress blindly. Compare the original and the result visually. Pixcuro shows both side by side with the size saving — use that to find the right quality for your image.',
+          'Beware of recompression: every time you save a JPG, you lose a little detail. Always keep the original master file and compress from that original each time you need a new version.',
+        ],
+      },
+    ],
+    cta: { label: 'Open the Image Compressor', href: '/image-compressor' },
+  },
+  {
+    slug: 'jpg-vs-png-vs-webp',
+    title: 'JPG vs PNG vs WebP: which format should I use?',
+    description: 'A clear, honest comparison of the three most common web image formats and when to use each.',
+    category: 'formats',
+    readingMinutes: 5,
+    intro:
+      'Most people reach for JPG out of habit. Modern formats can do better. This guide explains the trade-offs so you can pick the right format for the job.',
+    sections: [
+      {
+        heading: 'JPG',
+        paragraphs: [
+          'Best for: photographs, especially portraits, landscapes, and product photos with realistic colour gradients.',
+          'Trade-offs: lossy (each save loses a little detail), no transparency, no sharp edges (visible artefacts around text and lines).',
+        ],
+      },
+      {
+        heading: 'PNG',
+        paragraphs: [
+          'Best for: graphics with sharp edges, screenshots, logos that need transparency, UI assets.',
+          'Trade-offs: lossless (perfect quality) but large files, especially for photographs.',
+        ],
+      },
+      {
+        heading: 'WebP',
+        paragraphs: [
+          'Best for: most modern uses — photos, graphics, transparency, and small file size.',
+          'Trade-offs: supported by every modern browser since 2020. Older systems (some PDF readers, very old email clients) may not render it.',
+        ],
+      },
+      {
+        heading: 'AVIF',
+        paragraphs: [
+          'AVIF is even newer and produces files 20% smaller than WebP at the same visual quality. Browser support is now excellent in modern Chromium, Safari and Firefox.',
+          'If your audience is on modern browsers and you need the smallest possible file, AVIF is worth considering. If you need maximum compatibility, WebP is the safer default.',
+        ],
+      },
+    ],
+    cta: { label: 'Open the Image Converter', href: '/image-converter' },
+  },
+  {
+    slug: 'how-to-resize-an-image',
+    title: 'How to resize an image correctly',
+    description: 'How to change the size of an image for web, social media, and print — without blurring or stretching.',
+    category: 'resize',
+    readingMinutes: 4,
+    intro:
+      'Resizing sounds simple but there are a few traps. This guide explains how to resize images for the most common uses and how to avoid common mistakes.',
+    sections: [
+      {
+        heading: 'Pixels vs millimetres vs DPI',
+        paragraphs: [
+          'On screens, images are measured in pixels. A 1920×1080 image fills a full-HD display.',
+          'In print, images are measured in millimetres or inches and the printer uses dots-per-inch (DPI) to convert. 300 DPI is the typical print standard — a 35×45 mm passport photo needs 413×531 pixels at 300 DPI.',
+          'When you resize an image, the file size and the visual quality change. Bigger is not always better: a 6000-pixel-wide image on a 1920-pixel screen wastes bandwidth.',
+        ],
+      },
+      {
+        heading: 'Always lock the aspect ratio',
+        paragraphs: [
+          'Unless you specifically want to stretch an image, lock the aspect ratio. Otherwise the subject distorts and the result looks subtly wrong.',
+          'If you need a specific aspect ratio (say 16:9 for a YouTube thumbnail), crop rather than stretch. Pixcuro\'s Cropper tool makes this easy.',
+        ],
+      },
+      {
+        heading: 'Resize before uploading to social media',
+        paragraphs: [
+          'Most social platforms downscale uploads. Uploading a 6000-pixel-wide photo wastes your bandwidth and the platform\'s. Upload the exact dimensions the platform recommends for the best-looking result.',
+          'Pixcuro includes presets for Instagram, YouTube, LinkedIn, X (Twitter) and common e-commerce sizes.',
+        ],
+      },
+    ],
+    cta: { label: 'Open the Image Resizer', href: '/image-resizer' },
+  },
+  {
+    slug: 'transparent-png-explained',
+    title: 'Transparent PNG explained: what it is and how to use it',
+    description: 'What a transparent PNG actually is, when you need one, and how to create one.',
+    category: 'formats',
+    readingMinutes: 4,
+    intro:
+      'A transparent PNG is just a PNG where the background is "see-through" instead of a solid colour. Useful in many places — here is what it is and when you would want one.',
+    sections: [
+      {
+        heading: 'What is transparency?',
+        paragraphs: [
+          'Every pixel in a PNG has a colour and an alpha channel. The alpha channel controls how transparent that pixel is — 0 is fully transparent (invisible), 255 is fully opaque (solid).',
+          'When you place a PNG with transparency on a webpage, on a coloured background, or in another image, the transparent parts let the underlying colour show through.',
+        ],
+      },
+      {
+        heading: 'When you need a transparent PNG',
+        paragraphs: [
+          'Logos that need to sit on different coloured backgrounds.',
+          'Product photos for e-commerce sites that use a coloured product card.',
+          'Stickers, overlays and graphics that get layered on top of other content.',
+          'Avatars and profile pictures that you want to crop to a circle or shape.',
+        ],
+      },
+      {
+        heading: 'JPG cannot do transparency',
+        paragraphs: [
+          'JPG does not have an alpha channel, so it cannot represent transparency. If you save a transparent image as JPG, the transparent parts get filled with a colour (usually white or black).',
+          'Use PNG or WebP for transparent images. WebP at quality 90%+ usually produces a smaller file than PNG with the same visual result.',
+        ],
+      },
+    ],
+    cta: { label: 'Make a transparent background', href: '/transparent-background' },
+  },
+  {
+    slug: 'how-to-convert-image-formats',
+    title: 'How to convert image formats without losing quality',
+    description: 'Convert between JPG, PNG and WebP safely, with the right settings for each use case.',
+    category: 'convert',
+    readingMinutes: 4,
+    intro:
+      'Converting between formats is a common task — but the wrong settings can destroy quality. This guide covers the safe paths and the settings that matter.',
+    sections: [
+      {
+        heading: 'JPG to PNG',
+        paragraphs: [
+          'JPG is lossy by design, so converting to PNG cannot recover the lost detail. But it can give you a lossless container for the data that does remain.',
+          'Useful when a system requires PNG and you have only JPG available.',
+        ],
+      },
+      {
+        heading: 'PNG to JPG',
+        paragraphs: [
+          'JPG is much smaller for photographs. Converting a PNG photo to JPG at quality 85% is usually indistinguishable from the original but is dramatically smaller.',
+          'The one thing to watch: PNG supports transparency. JPG does not. Your transparent areas will become solid (white by default).',
+        ],
+      },
+      {
+        heading: 'Any format to WebP',
+        paragraphs: [
+          'WebP usually beats both JPG and PNG on size at the same visual quality. If your audience is on modern browsers (everyone since 2020), WebP is the safe modern default.',
+          'Pixcuro\'s Image Converter handles all of these conversions and shows you the size saving before you download.',
+        ],
+      },
+    ],
+    cta: { label: 'Open the Image Converter', href: '/image-converter' },
+  },
+  {
+    slug: 'privacy-of-online-image-tools',
+    title: 'How private are online image tools?',
+    description: 'What really happens when you upload an image to an online tool, and how to keep your photos private.',
+    category: 'privacy',
+    readingMinutes: 5,
+    intro:
+      'Most online image tools upload your photo to a server, process it, and send you the result. That means a copy exists on a remote machine, sometimes for hours or days. Here is how to think about it.',
+    sections: [
+      {
+        heading: 'What a typical tool does',
+        paragraphs: [
+          'When you upload a photo to a typical online image tool, the file travels over the internet to a remote server. The server processes the image (resize, compress, remove background) and sends you the result. The server may keep a copy for caching, debugging, or abuse prevention.',
+          'For ordinary photos this may be fine. But for sensitive images (ID photos, confidential documents, photos of minors), this is a real privacy concern.',
+        ],
+      },
+      {
+        heading: 'What a privacy-first tool does',
+        paragraphs: [
+          'A privacy-first tool processes the image entirely in your browser. The file never leaves your device. There is no upload step, no server-side processing, and no remote copy.',
+          'Pixcuro follows this model for every tool. Even background removal, which requires an AI model, runs the model locally in your browser via WebAssembly.',
+        ],
+      },
+      {
+        heading: 'How to check',
+        paragraphs: [
+          'Open your browser\'s Network tab while using an online tool. If you see requests uploading your image, the file is leaving your device.',
+          'On Pixcuro, the Network tab will show only the initial page load. After that, all processing happens locally — no upload requests are made.',
+        ],
+      },
+    ],
+    cta: { label: 'Read the Privacy Policy', href: '/privacy' },
+  },
+];
