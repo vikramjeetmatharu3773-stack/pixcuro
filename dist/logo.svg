@@ -1,0 +1,25 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 60" fill="none">
+  <defs>
+    <linearGradient id="bg-grad" x1="0" y1="0" x2="60" y2="60" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#118ce6"/>
+      <stop offset="100%" stop-color="#0a4b81"/>
+    </linearGradient>
+    <linearGradient id="text-grad" x1="0" y1="0" x2="200" y2="0" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#0a4b81"/>
+      <stop offset="100%" stop-color="#118ce6"/>
+    </linearGradient>
+  </defs>
+  <!-- Brand mark: a stylized "P" inside a rounded square with a cutout triangle for the "i" -->
+  <g transform="translate(4 4)">
+    <rect width="52" height="52" rx="14" fill="url(#bg-grad)"/>
+    <!-- P shape -->
+    <path d="M16 40V14h12a8 8 0 0 1 0 16H20v10z" fill="#ffffff"/>
+    <!-- Sparkle dot -->
+    <circle cx="38" cy="16" r="3" fill="#fde68a"/>
+    <!-- Cut corner accent -->
+    <path d="M0 52L16 36v16H0z" fill="#ffffff" fill-opacity="0.18"/>
+  </g>
+  <!-- Wordmark -->
+  <text x="68" y="42" font-family="'Plus Jakarta Sans', 'Inter', sans-serif" font-size="30" font-weight="800" fill="#0a4b81" letter-spacing="-0.5">Pix</text>
+  <text x="120" y="42" font-family="'Plus Jakarta Sans', 'Inter', sans-serif" font-size="30" font-weight="800" fill="url(#text-grad)" letter-spacing="-0.5">curo</text>
+</svg>
