@@ -1,6 +1,6 @@
 # Pixcuro
 
-> Free image tools that run in your browser. Background remover, compressor, resizer, cropper, converter and watermark — privacy-first, no signup.
+> Free image tools that run in your browser. Background remover, compressor, resizer, cropper, converter and watermark — privacy-first. Sign in (free) to download.
 
 ## What this site does
 
@@ -24,7 +24,7 @@ Every tool runs entirely in your browser:
 
 - Images are not uploaded to any server.
 - The background-removal AI runs via WebAssembly / ONNX locally on your device.
-- There is no signup, no tracking pixels, and no analytics by default.
+- There are no tracking pixels or analytics by default. Downloads require a free Google sign-in — sign-in only authorizes downloads, it does not receive image data.
 - The only data sent to a server is the static HTML/JS/CSS of the site itself.
 
 ## Supported formats

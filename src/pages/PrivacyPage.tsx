@@ -1,3 +1,4 @@
+import { Link } from 'react-router-dom';
 import { SITE } from '../lib/site';
 import { usePageMeta } from '../lib/usePageMeta';
 
@@ -18,6 +19,11 @@ export function PrivacyPage() {
           {SITE.name} is built around privacy. Every image you upload is processed in your own browser.
           We do not have a backend that receives your files, and we do not upload them anywhere. The
           background-removal AI model runs locally via WebAssembly.
+        </p>
+        <p className="text-sm text-ink-700 mt-2">
+          To keep the service fast and abuse-free, downloads require a free Google sign-in. Sign-in only
+          authorizes downloads — it does not receive your image data. The same private-processing guarantee
+          applies to every tool.
         </p>
       </Section>
 
@@ -60,7 +66,7 @@ export function PrivacyPage() {
 
       <Section title="Contact">
         <p>
-          Questions? Use the <a className="text-brand-700 hover:underline" href="/contact">contact form</a>.
+          Questions? Use the <Link className="text-brand-700 hover:underline" to="/contact">contact form</Link>.
         </p>
       </Section>
     </article>

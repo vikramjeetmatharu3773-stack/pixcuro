@@ -5,6 +5,7 @@ import { ImageUploader } from '../components/ImageUploader';
 import { DownloadButton } from '../components/DownloadButton';
 import { EditorToolbar } from '../components/EditorToolbar';
 import { ResultPanel } from '../components/ResultPanel';
+import { BeforeAfter } from '../components/Primitives';
 import { useEditorSession } from '../lib/useEditorSession';
 import { type EditorState, renderEditor, DEFAULT_CROP } from '../lib/editor';
 import { type ProcessResult } from '../lib/imageOps';
@@ -65,45 +66,58 @@ export function ImageCropperPage() {
         <h1 className="font-display font-extrabold text-3xl sm:text-4xl text-ink-900">{TOOL!.title}</h1>
         <p className="text-ink-700 mt-2">{TOOL!.intro}</p>
       </header>
-      <div className="grid lg:grid-cols-3 gap-6">
-        <div className="lg:col-span-2 space-y-5">
-          <CropCanvas
-            original={original.img}
-            state={state}
-            aspectRatio={aspectRatio}
-            onChange={update}
-            onRender={(_, blob) => {
-              if (preview?.url) URL.revokeObjectURL(preview.url);
-              const ext = state.output.format.split('/')[1].replace('jpeg', 'jpg');
-              const url = URL.createObjectURL(blob);
-              setPreview({ blob, url, width: state.output.width, height: state.output.height, size: blob.size, format: state.output.format, name: `${state.output.filename}.${ext}` });
-            }}
+
+      <div className="space-y-5">
+        {/* 1. MAIN PREVIEW - Full height Before/After slider with crop overlay */}
+        <CropCanvas
+          original={original.img}
+          state={state}
+          aspectRatio={aspectRatio}
+          onChange={update}
+          onRender={(_, blob) => {
+            if (preview?.url) URL.revokeObjectURL(preview.url);
+            const ext = state.output.format.split('/')[1].replace('jpeg', 'jpg');
+            const url = URL.createObjectURL(blob);
+            setPreview({ blob, url, width: state.output.width, height: state.output.height, size: blob.size, format: state.output.format, name: `${state.output.filename}.${ext}` });
+          }}
+          originalUrl={original.url}
+        />
+
+        {/* 2. EDIT TOOLS - Visible without scrolling down */}
+        <div className="card p-4 space-y-4">
+          <EditorToolbar 
+            canUndo={canUndo} 
+            canRedo={canRedo} 
+            onUndo={undo} 
+            onRedo={redo} 
+            onReset={() => update((s) => ({ ...s, crop: { ...DEFAULT_CROP, enabled: true } }))} 
           />
-          <EditorToolbar canUndo={canUndo} canRedo={canRedo} onUndo={undo} onRedo={redo} onReset={() => update((s) => ({ ...s, crop: { ...DEFAULT_CROP, enabled: true } }))} />
-          {preview && (
-            <ResultPanel
-              before={original.url}
-              after={preview.url}
-              beforeLabel="Original"
-              afterLabel="Cropped"
-              beforeStats={{ size: original.size, width: original.img.naturalWidth, height: original.img.naturalHeight, format: original.type }}
-              afterStats={{ size: preview.size, width: preview.width, height: preview.height, format: preview.format }}
-              actions={<DownloadButton primary={preview} filename={preview.name} />}
-            />
-          )}
-        </div>
-        <div className="space-y-4">
-          <div className="card p-4 space-y-3">
+          <div className="space-y-3">
             <h3 className="font-display font-bold text-ink-900">Aspect ratio</h3>
             <div className="flex flex-wrap gap-1">
               {ASPECT_RATIOS.map((a) => (
-                <button key={a.label} type="button" className={`px-2 py-1 rounded-md text-xs font-medium border ${aspectRatio === a.value ? 'bg-brand-100 border-brand-300 text-brand-800' : 'border-ink-200 hover:bg-ink-50'}`} onClick={() => setAspectRatio(a.value)}>{a.label}</button>
+                <button 
+                  key={a.label} 
+                  type="button" 
+                  className={`px-2 py-1 rounded-md text-xs font-medium border ${aspectRatio === a.value ? 'bg-brand-100 border-brand-300 text-brand-800' : 'border-ink-200 hover:bg-ink-50'}`}
+                  onClick={() => setAspectRatio(a.value)}
+                >
+                  {a.label}
+                </button>
               ))}
             </div>
-            <button type="button" className="btn-ghost text-xs" onClick={() => update((s) => ({ ...s, crop: { ...DEFAULT_CROP, enabled: true, width: 0.8, height: 0.8, x: 0.1, y: 0.1 } }))}>Reset crop</button>
-            <p className="text-xs text-ink-500">Crop: <span className="font-semibold">{Math.round(state.crop.x * original.img.naturalWidth)}</span>, <span className="font-semibold">{Math.round(state.crop.y * original.img.naturalHeight)}</span> · <span className="font-semibold">{Math.round(state.crop.width * original.img.naturalWidth)} × {Math.round(state.crop.height * original.img.naturalHeight)}</span></p>
+            <button 
+              type="button" 
+              className="btn-ghost text-xs" 
+              onClick={() => update((s) => ({ ...s, crop: { ...DEFAULT_CROP, enabled: true, width: 0.8, height: 0.8, x: 0.1, y: 0.1 } }))}
+            >
+              Reset crop
+            </button>
+            <p className="text-xs text-ink-500">
+              Crop: <span className="font-semibold">{Math.round(state.crop.x * original.img.naturalWidth)}</span>, <span className="font-semibold">{Math.round(state.crop.y * original.img.naturalHeight)}</span> · <span className="font-semibold">{Math.round(state.crop.width * original.img.naturalWidth)} × {Math.round(state.crop.height * original.img.naturalHeight)}</span>
+            </p>
           </div>
-          <div className="card p-4 space-y-3">
+          <div className="space-y-3 pt-3 border-t border-ink-100">
             <h3 className="font-display font-bold text-ink-900">Output</h3>
             <label className="block">
               <span className="text-xs text-ink-700">Format</span>
@@ -115,24 +129,41 @@ export function ImageCropperPage() {
             </label>
             {(state.output.format === 'image/jpeg' || state.output.format === 'image/webp') && (
               <label className="block">
-                <span className="text-xs text-ink-700 flex justify-between"><span>Quality</span><span>{Math.round(state.output.quality * 100)}%</span></span>
+                <span className="text-xs text-ink-700 flex justify-between">
+                  <span>Quality</span><span>{Math.round(state.output.quality * 100)}%</span>
+                </span>
                 <input type="range" min={0.4} max={1} step={0.01} value={state.output.quality} onChange={(e) => update((s) => ({ ...s, output: { ...s.output, quality: parseFloat(e.target.value) } }))} className="mt-2 w-full accent-brand-600" />
               </label>
             )}
           </div>
-          <button type="button" className="btn-secondary w-full" onClick={() => { if (preview?.url) URL.revokeObjectURL(preview.url); setPreview(null); clear(); }}>Start over</button>
         </div>
+
+        {/* 3. COMPACT RESULT PANEL - File summary + single download button */}
+        {preview && (
+          <ResultPanel
+            beforeLabel="Original"
+            afterLabel="Cropped"
+            beforeStats={{ size: original.size, width: original.img.naturalWidth, height: original.img.naturalHeight, format: original.type }}
+            afterStats={{ size: preview.size, width: preview.width, height: preview.height, format: preview.format }}
+            actions={<DownloadButton primary={preview} filename={preview.name} />}
+          />
+        )}
+
+        <button type="button" className="btn-secondary w-full" onClick={() => { if (preview?.url) URL.revokeObjectURL(preview.url); setPreview(null); clear(); }}>Start over</button>
       </div>
     </div>
   );
 }
 
-function CropCanvas({ original, state, aspectRatio, onChange, onRender }: { original: HTMLImageElement; state: EditorState; aspectRatio: number | null; onChange: (next: EditorState | ((prev: EditorState) => EditorState)) => void; onRender: (c: HTMLCanvasElement, b: Blob) => void }) {
+function CropCanvas({ original, state, aspectRatio, onChange, onRender, originalUrl }: { original: HTMLImageElement; state: EditorState; aspectRatio: number | null; onChange: (next: EditorState | ((prev: EditorState) => EditorState)) => void; onRender: (c: HTMLCanvasElement, b: Blob) => void; originalUrl: string }) {
   const wrapRef = useRef<HTMLDivElement>(null);
+  const canvasRef = useRef<HTMLCanvasElement>(null);
   const [display, setDisplay] = useState({ w: 0, h: 0 });
   const [drag, setDrag] = useState<null | 'move' | { corner: 'nw' | 'ne' | 'sw' | 'se' }>(null);
   const startRef = useRef<{ x: number; y: number; crop: typeof state.crop } | null>(null);
   const renderToken = useRef(0);
+  const [rendering, setRendering] = useState(false);
+  const [renderedUrl, setRenderedUrl] = useState<string>(originalUrl);
 
   useEffect(() => {
     if (!wrapRef.current) return;
@@ -148,10 +179,18 @@ function CropCanvas({ original, state, aspectRatio, onChange, onRender }: { orig
 
   useEffect(() => {
     const t = ++renderToken.current;
+    setRendering(true);
     renderEditor(original, null, state).then(({ canvas, blob }) => {
       if (t !== renderToken.current) return;
+      if (canvasRef.current) {
+        canvasRef.current.width = canvas.width;
+        canvasRef.current.height = canvas.height;
+        const ctx = canvasRef.current.getContext('2d');
+        if (ctx) ctx.drawImage(canvas, 0, 0);
+      }
       onRender(canvas, blob);
-    }).catch(() => {});
+      setRenderedUrl(canvas.toDataURL());
+    }).catch(() => {}).finally(() => { if (t === renderToken.current) setRendering(false); });
   }, [original, state]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const crop = state.crop;
@@ -195,7 +234,8 @@ function CropCanvas({ original, state, aspectRatio, onChange, onRender }: { orig
   const onUp = () => { setDrag(null); startRef.current = null; };
 
   return (
-    <div className="card overflow-hidden">
+    <div className="card relative overflow-hidden">
+      {/* Crop overlay on the source image */}
       <div ref={wrapRef} className="relative w-full select-none touch-none" style={{ aspectRatio: `${original.naturalWidth} / ${original.naturalHeight}` }}>
         <img src={original.src} alt="Source" className="absolute inset-0 w-full h-full object-contain pointer-events-none" />
         <div className="absolute inset-0 pointer-events-none">
@@ -222,6 +262,21 @@ function CropCanvas({ original, state, aspectRatio, onChange, onRender }: { orig
           ))}
         </div>
       </div>
+
+      {/* Full-height Before/After slider with the rendered result */}
+      <BeforeAfter
+        before={originalUrl}
+        after={renderedUrl}
+        beforeLabel="Original"
+        afterLabel="Cropped"
+        fullHeight
+      />
+      <canvas ref={canvasRef} className="hidden" />
+      {rendering && (
+        <div className="absolute inset-0 bg-white/40 backdrop-blur-sm flex items-center justify-center text-sm text-ink-700 font-medium pointer-events-none">
+          Rendering…
+        </div>
+      )}
     </div>
   );
 }

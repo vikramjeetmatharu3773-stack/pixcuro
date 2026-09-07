@@ -74,13 +74,26 @@ export function ResizePage({ title, intro, path, defaultUnit = 'px', defaultDpi 
     } catch (e) { setError(e instanceof Error ? e.message : 'Could not load image'); }
   }, [loadFile, setError, preview]);
 
-  // Sync output dimensions with the user's selected width/height
+  // Initialize w/h from the loaded image dimensions (so the inputs aren't 1×1).
+  const [initialized, setInitialized] = useState(false);
   useEffect(() => {
-    if (!original) return;
+    if (!original) { setInitialized(false); return; }
+    if (!initialized) {
+      setWidth(original.img.naturalWidth);
+      setHeight(original.img.naturalHeight);
+      setWInput(original.img.naturalWidth);
+      setHInput(original.img.naturalHeight);
+      setInitialized(true);
+    }
+  }, [original, initialized]);
+
+  // Sync output dimensions with the user's selected width/height (only after init)
+  useEffect(() => {
+    if (!original || !initialized) return;
     const pxW = toPx(wInput, unit);
     const pxH = toPx(hInput, unit);
     setWidth(pxW); setHeight(pxH);
-  }, [wInput, hInput, unit, dpi, toPx, original]);
+  }, [wInput, hInput, unit, dpi, toPx, original, initialized]);
 
   // Push output dimensions into the editor state
   useEffect(() => {

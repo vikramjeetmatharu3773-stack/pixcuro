@@ -8,6 +8,7 @@ import { ImageUploader } from './ImageUploader';
 import { EditorToolbar } from './EditorToolbar';
 import { DownloadButton } from './DownloadButton';
 import { ResultPanel } from './ResultPanel';
+import { BeforeAfter } from './Primitives';
 import { useEditorSession } from '../lib/useEditorSession';
 import {
   type EditorState,
@@ -71,42 +72,62 @@ export function SingleImageEditorPage({ title, intro, defaultFormat = 'image/png
         <p className="text-ink-700 mt-2">{intro}</p>
       </header>
 
-      <div className="grid lg:grid-cols-3 gap-6">
-        <div className="lg:col-span-2 space-y-5">
-          <Preview source={original.img} state={state} onRender={(_, blob) => {
+      <div className="space-y-5">
+        {/* 1. MAIN PREVIEW - Full height Before/After slider */}
+        <LivePreview
+          source={original.img}
+          state={state}
+          originalUrl={original.url}
+          onRender={(_, blob) => {
             if (preview?.url) URL.revokeObjectURL(preview.url);
             const ext = state.output.format.split('/')[1].replace('jpeg', 'jpg');
             const url = URL.createObjectURL(blob);
             setPreview({ blob, url, width: state.output.width, height: state.output.height, size: blob.size, format: state.output.format, name: `${state.output.filename}.${ext}` });
-          }} />
-          <EditorToolbar canUndo={canUndo} canRedo={canRedo} onUndo={undo} onRedo={redo} onReset={reset} />
-          {preview && (
-            <ResultPanel
-              before={original.url}
-              after={preview.url}
-              beforeLabel="Original"
-              afterLabel="Result"
-              beforeStats={{ size: original.size, width: original.img.naturalWidth, height: original.img.naturalHeight, format: original.type }}
-              afterStats={{ size: preview.size, width: preview.width, height: preview.height, format: preview.format }}
-              actions={<DownloadButton primary={preview} filename={preview.name} />}
-            />
-          )}
-          {footer}
-        </div>
-        <div className="space-y-4">
+          }}
+        />
+
+        {/* 2. EDIT TOOLS - Visible without scrolling down */}
+        <div className="card p-4 space-y-4">
+          <EditorToolbar
+            canUndo={canUndo}
+            canRedo={canRedo}
+            onUndo={undo}
+            onRedo={redo}
+            onReset={reset}
+          />
           {sidebar({ state, setState: update, original })}
-          <button type="button" className="btn-secondary w-full" onClick={() => { if (preview?.url) URL.revokeObjectURL(preview.url); setPreview(null); clear(); }}>Start over</button>
         </div>
+
+        {/* 3. COMPACT RESULT PANEL - File summary + single download button */}
+        {preview && (
+          <ResultPanel
+            beforeLabel="Original"
+            afterLabel="Result"
+            beforeStats={{ size: original.size, width: original.img.naturalWidth, height: original.img.naturalHeight, format: original.type }}
+            afterStats={{ size: preview.size, width: preview.width, height: preview.height, format: preview.format }}
+            actions={
+              <DownloadButton
+                primary={preview}
+                filename={preview.name}
+              />
+            }
+          />
+        )}
+
+        <button type="button" className="btn-secondary w-full" onClick={() => { if (preview?.url) URL.revokeObjectURL(preview.url); setPreview(null); clear(); }}>Start over</button>
+        {footer}
       </div>
     </div>
   );
 }
 
-function Preview({ source, state, onRender }: { source: HTMLImageElement; state: EditorState; onRender: (c: HTMLCanvasElement, b: Blob) => void }) {
+function LivePreview({ source, state, originalUrl, onRender }: { source: HTMLImageElement; state: EditorState; originalUrl: string; onRender: (c: HTMLCanvasElement, b: Blob) => void }) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
+  const [rendering, setRendering] = useState(false);
   const token = useRef(0);
   useEffect(() => {
     const t = ++token.current;
+    setRendering(true);
     renderEditor(source, null, state)
       .then(({ canvas, blob }) => {
         if (t !== token.current) return;
@@ -118,11 +139,29 @@ function Preview({ source, state, onRender }: { source: HTMLImageElement; state:
         }
         onRender(canvas, blob);
       })
-      .catch(() => {});
+      .catch(() => {})
+      .finally(() => {
+        if (t === token.current) setRendering(false);
+      });
   }, [source, state]);
+  if (!source) return <div className="card aspect-video flex items-center justify-center text-ink-500 text-sm">Upload an image to see the preview</div>;
+
   return (
-    <div className="card overflow-hidden">
-      <canvas ref={canvasRef} className="block w-full h-auto bg-ink-100 checker-bg" />
+    <div className="card relative overflow-hidden">
+      {/* Full-height Before/After slider with the rendered result */}
+      <BeforeAfter
+        before={originalUrl}
+        after={canvasRef.current ? canvasRef.current.toDataURL() : originalUrl}
+        beforeLabel="Original"
+        afterLabel="Result"
+        fullHeight
+      />
+      <canvas ref={canvasRef} className="hidden" />
+      {rendering && (
+        <div className="absolute inset-0 bg-white/40 backdrop-blur-sm flex items-center justify-center text-sm text-ink-700 font-medium pointer-events-none">
+          Rendering…
+        </div>
+      )}
     </div>
   );
 }

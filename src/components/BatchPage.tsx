@@ -51,7 +51,7 @@ export function BatchPage<TOpts>({ title, intro, process, Options, defaultOption
         const img = await fileToImage(file);
         list.push({ file, url, img, width: img.naturalWidth, height: img.naturalHeight, size: file.size, status: 'pending' });
       } catch (e) {
-        console.error('Bad file', file.name, e);
+        console.warn('Bad file', file.name, e);
       }
     }
     setFiles((prev) => [...prev, ...list]);

@@ -5,9 +5,11 @@ interface BeforeAfterProps {
   after: string;
   beforeLabel?: string;
   afterLabel?: string;
+  /** If true, render as a full-height comparison slider for the main preview */
+  fullHeight?: boolean;
 }
 
-export function BeforeAfter({ before, after, beforeLabel = 'Before', afterLabel = 'After' }: BeforeAfterProps) {
+export function BeforeAfter({ before, after, beforeLabel = 'Before', afterLabel = 'After', fullHeight = false }: BeforeAfterProps) {
   const [position, setPosition] = useState(50);
   const [dragging, setDragging] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
@@ -39,66 +41,71 @@ export function BeforeAfter({ before, after, beforeLabel = 'Before', afterLabel 
     };
   }, [dragging]);
 
+  const containerClass = fullHeight 
+    ? "relative w-full h-full min-h-[300px] rounded-2xl overflow-hidden border border-ink-200 bg-ink-100 checker-bg select-none"
+    : "relative w-full aspect-video rounded-2xl overflow-hidden border border-ink-200 bg-ink-100 checker-bg select-none";
+
   return (
-    <div
-      ref={ref}
-      className="relative w-full aspect-video rounded-2xl overflow-hidden border border-ink-200 bg-ink-100 checker-bg select-none"
-      aria-label="Before and after comparison slider"
-      role="img"
-    >
-      {/* After image (full) */}
-      <img
-        src={after}
-        alt={afterLabel}
-        draggable={false}
-        className="absolute inset-0 w-full h-full object-contain pointer-events-none"
-      />
-      {/* Before image clipped */}
-      <div
-        className="absolute inset-0 overflow-hidden pointer-events-none"
-        style={{ width: `${position}%` }}
-      >
-        <img
-          src={before}
-          alt={beforeLabel}
-          draggable={false}
-          className="absolute inset-0 h-full object-contain"
-          style={{ width: `${(100 / position) * 100}%`, maxWidth: 'none' }}
-        />
+    <div className="space-y-2">
+      <div className="flex items-center justify-between text-xs font-semibold text-ink-700">
+        <span className="inline-flex items-center gap-1.5">
+          <span className="w-1.5 h-1.5 rounded-full bg-ink-400" />
+          {beforeLabel}
+        </span>
+        <span className="inline-flex items-center gap-1.5">
+          {afterLabel}
+          <span className="w-1.5 h-1.5 rounded-full bg-brand-500" />
+        </span>
       </div>
-      {/* Divider */}
       <div
-        className="absolute top-0 bottom-0 w-0.5 bg-white shadow-md pointer-events-none"
-        style={{ left: `${position}%`, transform: 'translateX(-50%)' }}
-      />
-      {/* Handle */}
-      <button
-        type="button"
-        aria-label="Drag to compare before and after"
-        className="absolute top-1/2 w-10 h-10 -translate-x-1/2 -translate-y-1/2 rounded-full bg-white shadow-lg border border-ink-200 flex items-center justify-center cursor-ew-resize"
-        style={{ left: `${position}%` }}
-        onMouseDown={(e) => {
-          e.preventDefault();
-          setDragging(true);
-        }}
-        onTouchStart={() => setDragging(true)}
-        onKeyDown={(e) => {
-          if (e.key === 'ArrowLeft') setPosition((p) => Math.max(0, p - 4));
-          if (e.key === 'ArrowRight') setPosition((p) => Math.min(100, p + 4));
-        }}
+        ref={ref}
+        className={containerClass}
+        aria-label="Before and after comparison slider"
+        role="img"
       >
-        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#475569" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-          <polyline points="15 18 9 12 15 6" />
-          <polyline points="9 18 3 12 9 6" transform="translate(12,0)" />
-        </svg>
-      </button>
-      {/* Labels */}
-      <span className="absolute top-2 left-2 px-2 py-0.5 text-xs font-medium rounded-full bg-black/60 text-white">
-        {beforeLabel}
-      </span>
-      <span className="absolute top-2 right-2 px-2 py-0.5 text-xs font-medium rounded-full bg-black/60 text-white">
-        {afterLabel}
-      </span>
+        {/* After image (full) */}
+        <img
+          src={after}
+          alt={afterLabel}
+          draggable={false}
+          className="absolute inset-0 w-full h-full object-contain"
+        />
+        {/* Before image clipped */}
+        <div
+          className="absolute inset-0 overflow-hidden"
+          style={{ width: `${position}%` }}
+        >
+          <img
+            src={before}
+            alt={beforeLabel}
+            draggable={false}
+            className="absolute top-0 left-0 h-full w-full object-contain"
+            style={{ width: `${(100 / (position || 0.1)) * 100}%`, maxWidth: 'none' }}
+          />
+        </div>
+        {/* Divider */}
+        <div
+          className="absolute top-0 bottom-0 w-0.5 bg-white shadow-md pointer-events-none"
+          style={{ left: `${position}%`, transform: 'translateX(-50%)' }}
+        />
+        {/* Handle */}
+        <button
+          type="button"
+          aria-label="Drag to compare before and after"
+          className="absolute top-1/2 w-10 h-10 -translate-x-1/2 -translate-y-1/2 rounded-full bg-white shadow-lg border border-ink-200 flex items-center justify-center cursor-ew-resize"
+          style={{ left: `${position}%` }}
+          onMouseDown={(e) => {
+            e.preventDefault();
+            setDragging(true);
+          }}
+          onTouchStart={() => setDragging(true)}
+        >
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#475569" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+            <polyline points="15 18 9 12 15 6" />
+            <polyline points="9 18 3 12 9 6" transform="translate(12,0)" />
+          </svg>
+        </button>
+      </div>
     </div>
   );
 }

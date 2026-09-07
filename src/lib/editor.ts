@@ -129,6 +129,8 @@ export interface OutputSettings {
   height: number;
   /** Background color when format doesn't support alpha (jpg) */
   flattenColor: string;
+  /** If set > 0, the render step should auto-pick quality to hit this target size in KB */
+  targetKB?: number;
 }
 
 export interface EditorState {
@@ -346,16 +348,48 @@ export async function renderEditor(
   opts.onProgress?.('watermark', 0.7);
   await drawWatermarks(ctx, out.width, out.height, state);
 
+  // 4. Encode — honoring targetKB if requested and format supports quality
+  const useQuality = state.output.format === 'image/jpeg' || state.output.format === 'image/webp';
+  const targetKB = state.output.targetKB && state.output.targetKB > 0 ? state.output.targetKB : 0;
+
+  let quality = state.output.quality;
+
+  if (targetKB > 0 && useQuality) {
+    // Binary search for the highest quality that fits the target.
+    let lo = 0.3, hi = 1.0;
+    let bestQuality = 0.7;
+    let bestBlob: Blob | null = null;
+    for (let i = 0; i < 6; i++) {
+      const q = (lo + hi) / 2;
+      const b = await encodeCanvas(out, state.output.format, q);
+      if (!b) break;
+      const sizeKB = b.size / 1024;
+      if (sizeKB <= targetKB) {
+        bestQuality = q;
+        bestBlob = b;
+        lo = q;
+      } else {
+        hi = q;
+      }
+    }
+    if (bestBlob) {
+      opts.onProgress?.('done', 1);
+      return { canvas: out, blob: bestBlob };
+    }
+    quality = bestQuality;
+  }
+
   opts.onProgress?.('encode', 0.9);
-  const blob: Blob = await new Promise((resolve, reject) => {
-    out.toBlob(
-      (b) => (b ? resolve(b) : reject(new Error('Encode failed'))),
-      state.output.format,
-      state.output.quality,
-    );
-  });
+  const blob = await encodeCanvas(out, state.output.format, quality);
+  if (!blob) throw new Error('Encode failed');
   opts.onProgress?.('done', 1);
   return { canvas: out, blob };
+}
+
+function encodeCanvas(canvas: HTMLCanvasElement, format: string, quality: number): Promise<Blob | null> {
+  return new Promise((resolve) => {
+    canvas.toBlob((b) => resolve(b), format, quality);
+  });
 }
 
 function drawBackground(ctx: CanvasRenderingContext2D, w: number, h: number, bg: BackgroundDef) {

@@ -1,6 +1,7 @@
-import { lazy, Suspense } from 'react';
+import { lazy, Suspense, type ReactNode } from 'react';
 import { createBrowserRouter, RouterProvider } from 'react-router-dom';
 import { Layout } from './components/Layout';
+import { AuthProvider } from './components/AuthProvider';
 import { HomePage } from './pages/HomePage';
 import { ToolsIndexPage } from './pages/ToolsIndexPage';
 import { AboutPage } from './pages/AboutPage';
@@ -9,6 +10,7 @@ import { TermsPage } from './pages/TermsPage';
 import { ContactPage } from './pages/ContactPage';
 import { FaqPage } from './pages/FaqPage';
 import { NotFoundPage } from './pages/NotFoundPage';
+import { AuthCallbackPage } from './pages/AuthCallbackPage';
 
 // Lazy-load each tool page so the @imgly/background-removal bundle only ships
 // when a user actually visits a tool page (esp. background-remover).
@@ -17,13 +19,6 @@ const ImageCompressorPage = lazy(() => import('./pages/ImageCompressorPage').the
 const ImageResizerPage = lazy(() => import('./pages/ImageResizerPage').then((m) => ({ default: m.ImageResizerPage })));
 const ImageCropperPage = lazy(() => import('./pages/ImageCropperPage').then((m) => ({ default: m.ImageCropperPage })));
 const ImageConverterPage = lazy(() => import('./pages/ImageConverterPage').then((m) => ({ default: m.ImageConverterPage })));
-const JpgToPngPage = lazy(() => import('./pages/JpgToPngPage').then((m) => ({ default: m.JpgToPngPage })));
-const PngToJpgPage = lazy(() => import('./pages/PngToJpgPage').then((m) => ({ default: m.PngToJpgPage })));
-const JpgToWebpPage = lazy(() => import('./pages/JpgToWebpPage').then((m) => ({ default: m.JpgToWebpPage })));
-const PngToWebpPage = lazy(() => import('./pages/PngToWebpPage').then((m) => ({ default: m.PngToWebpPage })));
-const WebpToJpgPage = lazy(() => import('./pages/WebpToJpgPage').then((m) => ({ default: m.WebpToJpgPage })));
-const WebpToPngPage = lazy(() => import('./pages/WebpToPngPage').then((m) => ({ default: m.WebpToPngPage })));
-const WebpConverterPage = lazy(() => import('./pages/WebpConverterPage').then((m) => ({ default: m.WebpConverterPage })));
 const ImageOptimizerPage = lazy(() => import('./pages/ImageOptimizerPage').then((m) => ({ default: m.ImageOptimizerPage })));
 const ReduceFileSizePage = lazy(() => import('./pages/ReduceFileSizePage').then((m) => ({ default: m.ReduceFileSizePage })));
 const ExifRemoverPage = lazy(() => import('./pages/ExifRemoverPage').then((m) => ({ default: m.ExifRemoverPage })));
@@ -86,25 +81,27 @@ const routes = [
       { path: 'image-cropper', element: <Suspense fallback={<PageFallback />}><ImageCropperPage /></Suspense> },
       { path: 'image-rotate', element: <Suspense fallback={<PageFallback />}><ImageRotatePage /></Suspense> },
       { path: 'image-converter', element: <Suspense fallback={<PageFallback />}><ImageConverterPage /></Suspense> },
-      { path: 'jpg-to-png', element: <Suspense fallback={<PageFallback />}><JpgToPngPage /></Suspense> },
-      { path: 'png-to-jpg', element: <Suspense fallback={<PageFallback />}><PngToJpgPage /></Suspense> },
-      { path: 'jpg-to-webp', element: <Suspense fallback={<PageFallback />}><JpgToWebpPage /></Suspense> },
-      { path: 'png-to-webp', element: <Suspense fallback={<PageFallback />}><PngToWebpPage /></Suspense> },
-      { path: 'webp-to-jpg', element: <Suspense fallback={<PageFallback />}><WebpToJpgPage /></Suspense> },
-      { path: 'webp-to-png', element: <Suspense fallback={<PageFallback />}><WebpToPngPage /></Suspense> },
-      { path: 'webp-converter', element: <Suspense fallback={<PageFallback />}><WebpConverterPage /></Suspense> },
       { path: 'watermark-image', element: <Suspense fallback={<PageFallback />}><WatermarkImagePage /></Suspense> },
       { path: 'enhance-image', element: <Suspense fallback={<PageFallback />}><ImageEnhancePage /></Suspense> },
       { path: 'batch-compress', element: <Suspense fallback={<PageFallback />}><BatchCompressPage /></Suspense> },
       { path: 'batch-resize', element: <Suspense fallback={<PageFallback />}><BatchResizePage /></Suspense> },
       { path: 'batch-convert', element: <Suspense fallback={<PageFallback />}><BatchConvertPage /></Suspense> },
       { path: '*', element: <NotFoundPage /> },
+      { path: 'auth/callback', element: <AuthCallbackPage /> },
     ],
   },
 ];
 
-const router = createBrowserRouter(routes);
+function RootProviders({ children }: { children: ReactNode }) {
+  return <AuthProvider>{children}</AuthProvider>;
+}
+
+const router = createBrowserRouter(routes, { basename: '/pixcuro' });
 
 export default function App() {
-  return <RouterProvider router={router} />;
+  return (
+    <RootProviders>
+      <RouterProvider router={router} />
+    </RootProviders>
+  );
 }

@@ -18,7 +18,7 @@ import {
   rgbToHsl,
   hslToRgb,
 } from '../lib/editor';
-import { ACCEPTED_TYPES, formatBytes } from '../lib/imageOps';
+import { ACCEPTED_TYPES } from '../lib/imageOps';
 
 interface BackgroundEditorProps {
   state: EditorState;
@@ -578,9 +578,29 @@ export function BackgroundEditor({ state, onChange, showFilters = true, showTran
             className="input mt-1"
           />
         </label>
-        <p className="text-xs text-ink-500">
-          Estimated size: <span className="font-semibold text-ink-700">{formatBytes(Math.round(state.output.width * state.output.height * (state.output.format === 'image/png' ? 0.6 : 0.18 * state.output.quality)))}</span> (rough estimate)
-        </p>
+        <div className="pt-2 border-t border-ink-100">
+          <details className="text-xs">
+            <summary className="cursor-pointer text-brand-700 font-medium py-1">Target a specific file size</summary>
+            <p className="text-ink-500 mt-1 mb-2">Auto-picks the lowest quality that hits your target. Image is never re-compressed below the target.</p>
+            <div className="flex items-center gap-2">
+              <input
+                type="number"
+                min={10}
+                max={5000}
+                step={10}
+                value={state.output.targetKB ?? 0}
+                onChange={(e) => {
+                  const v = parseInt(e.target.value, 10) || 0;
+                  onChange({ ...state, output: { ...state.output, targetKB: v } });
+                }}
+                className="input flex-1"
+                placeholder="e.g. 200"
+              />
+              <span className="text-xs text-ink-500">KB</span>
+            </div>
+          </details>
+        </div>
+        <p className="text-xs text-ink-500">Format and filename only change if you edit them. Your original name is preserved.</p>
       </Section>
     </div>
   );

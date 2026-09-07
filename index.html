@@ -5,8 +5,18 @@
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
     <meta name="theme-color" content="#066fc4" />
     <meta name="color-scheme" content="light" />
-    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
-    <link rel="apple-touch-icon" href="/favicon.svg" />
+    <link rel="icon" type="image/svg+xml" href="favicon.svg" />
+    <link rel="apple-touch-icon" href="favicon.svg" />
+    <!-- GitHub Pages SPA fallback: remember the requested path so the router can restore it after the 404 bounce -->
+    <script>
+      (function () {
+        var redirect = sessionStorage.getItem('redirect');
+        if (redirect && redirect !== location.pathname) {
+          sessionStorage.removeItem('redirect');
+          history.replaceState(null, '', redirect);
+        }
+      })();
+    </script>
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link
@@ -16,7 +26,7 @@
     <title>Pixcuro — Free Image Tools That Run in Your Browser</title>
     <meta
       name="description"
-      content="Pixcuro is a free, privacy-first image toolkit. Remove backgrounds, compress, resize, crop, and convert images — all processed locally in your browser. No uploads, no signup."
+      content="Pixcuro is a privacy-first image toolkit. Remove backgrounds, compress, resize, crop, and convert images — all processed locally in your browser. No uploads ever."
     />
     <meta name="robots" content="index,follow,max-image-preview:large" />
     <meta name="author" content="Pixcuro" />

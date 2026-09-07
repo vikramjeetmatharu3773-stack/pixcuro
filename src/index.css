@@ -45,8 +45,7 @@
 
   .btn {
     @apply inline-flex items-center justify-center gap-2 rounded-xl px-4 py-2.5 text-sm font-semibold
-      transition-all duration-150 disabled:opacity-50 disabled:cursor-not-allowed
-      focus-visible:ring-2 focus-visible:ring-offset-2;
+      transition-all duration-150 disabled:opacity-50 disabled:cursor-not-allowed;
   }
 
   .btn-primary {
@@ -69,7 +68,7 @@
   .input,
   .select,
   .textarea {
-    @apply w-full rounded-lg border border-ink-200 bg-white px-3 py-2 text-sm
+    @apply w-full rounded-lg border border-ink-200 bg-white px-3 py-2 text-sm text-ink-900
       focus:border-brand-400 focus:ring-2 focus:ring-brand-100 focus:outline-none
       disabled:bg-ink-50 disabled:text-ink-500;
   }
@@ -92,6 +91,56 @@
     background-size: 16px 16px;
     background-position: 0 0, 0 8px, 8px -8px, -8px 0px;
   }
+}
+
+/* Keyframes for the polished drawer & menu */
+@keyframes slideInRight {
+  from { transform: translateX(100%); }
+  to { transform: translateX(0); }
+}
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+/* Tool preview animations (lightweight, GPU-accelerated) */
+@keyframes panoGrad {
+  0%, 100% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+}
+@keyframes pulsePop {
+  0%, 100% { transform: translate(-50%, -50%) scale(1); }
+  50% { transform: translate(-50%, -50%) scale(1.08); }
+}
+@keyframes barBounce {
+  0%, 100% { transform: scaleY(1); }
+  50% { transform: scaleY(0.6); }
+}
+@keyframes ticker {
+  0%, 100% { transform: translateX(0); }
+  50% { transform: translateX(0); }
+}
+@keyframes resizerPulse {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(0.92); }
+}
+@keyframes dash {
+  to { stroke-dashoffset: -28; }
+}
+@keyframes cropSlide {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(0.85); }
+}
+@keyframes wmSlide {
+  0% { transform: translate(-40px, -10px) rotate(-15deg); }
+  100% { transform: translate(80px, 30px) rotate(-15deg); }
+}
+@keyframes stackIn {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-4px); }
+}
+@keyframes spin {
+  to { transform: rotate(360deg); }
 }
 
 /* Scrollbar polish */

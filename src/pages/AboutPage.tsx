@@ -1,3 +1,4 @@
+import { Link } from 'react-router-dom';
 import { SITE } from '../lib/site';
 import { usePageMeta } from '../lib/usePageMeta';
 
@@ -20,9 +21,7 @@ export function AboutPage() {
       <p className="text-ink-700 mt-4">
         {SITE.name} is a small, focused image toolkit built around one idea:
         your photos should stay on your device. Every tool — the background remover, compressor, resizer,
-        cropper and converter — runs locally in your browser using open-source technologies. There is no
-        signup, no upload, and no tracking of your images.
-      </p>
+        cropper and converter — runs locally in your browser using open-source technologies. There is no upload, and no tracking of your images. Downloads require a free sign-in to keep the service fast and abuse-free.</p>
 
       <h2 className="font-display font-bold text-xl mt-8 mb-2 text-ink-900">Why we built it</h2>
       <p className="text-ink-700">
@@ -50,7 +49,7 @@ export function AboutPage() {
 
       <h2 className="font-display font-bold text-xl mt-8 mb-2 text-ink-900">Get in touch</h2>
       <p className="text-ink-700">
-        Found a bug, or have a tool suggestion? Use the <a className="text-brand-700 hover:underline" href="/contact">contact form</a>.
+        Found a bug, or have a tool suggestion? Use the <Link className="text-brand-700 hover:underline" to="/contact">contact form</Link>.
       </p>
     </article>
   );

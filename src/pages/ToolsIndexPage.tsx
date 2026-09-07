@@ -2,6 +2,7 @@ import { useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { SITE, TOOLS, CATEGORY_META, type ToolCategory } from '../lib/site';
 import { usePageMeta } from '../lib/usePageMeta';
+import { ToolPreview } from '../components/ToolPreview';
 
 export function ToolsIndexPage() {
   usePageMeta({
@@ -78,9 +79,14 @@ export function ToolsIndexPage() {
               <p className="text-ink-600 mt-1 mb-4">{CATEGORY_META[cat].subtitle}</p>
               <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
                 {tools.map((t) => (
-                  <Link key={t.slug} to={t.path} className="card p-5 hover:border-brand-300 hover:shadow-md transition-all">
-                    <h3 className="font-display font-bold text-base text-ink-900">{t.shortTitle}</h3>
-                    <p className="mt-1 text-sm text-ink-600 line-clamp-2">{t.description}</p>
+                  <Link key={t.slug} to={t.path} className="card p-4 hover:border-brand-300 hover:shadow-md transition-all group flex gap-4">
+                    <div className="w-24 shrink-0 self-start">
+                      <ToolPreview slug={t.slug} category={t.category} />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <h3 className="font-display font-bold text-sm text-ink-900 group-hover:text-brand-700">{t.shortTitle}</h3>
+                      <p className="mt-1 text-xs text-ink-600 line-clamp-2">{t.description}</p>
+                    </div>
                   </Link>
                 ))}
               </div>
