@@ -1,7 +1,0 @@
-User-agent: *
-Allow: /
-
-# Disallow internal/dev paths (none right now)
-Disallow: /api/
-
-Sitemap: https://pixcuro.vercel.app/sitemap.xml
