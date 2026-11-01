@@ -6,7 +6,7 @@
 
 import * as ort from 'onnxruntime-web';
 
-const MODEL_URL = '/u2netp.onnx';
+const MODEL_URL = import.meta.env.BASE_URL + 'u2netp.onnx';
 
 let session: ort.InferenceSession | null = null;
 let modelPromise: Promise<ort.InferenceSession> | null = null;
