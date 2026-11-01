@@ -21,9 +21,8 @@ export function PrivacyPage() {
           background-removal AI model runs locally via WebAssembly.
         </p>
         <p className="text-sm text-ink-700 mt-2">
-          To keep the service fast and abuse-free, downloads require a free Google sign-in. Sign-in only
-          authorizes downloads — it does not receive your image data. The same private-processing guarantee
-          applies to every tool.
+          Downloads are completely free — no account, no sign-in, no credit card
+          required. Everything runs in your browser.
         </p>
       </Section>
 
