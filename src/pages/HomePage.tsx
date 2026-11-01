@@ -86,7 +86,7 @@ export function HomePage() {
       <section className="container-narrow pt-12 pb-10 sm:pt-20 sm:pb-16 text-center">
         <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/70 border border-ink-200 text-xs font-medium text-ink-700 mb-5">
           <span className="w-2 h-2 rounded-full bg-green-500 animate-pulse-soft" />
-          100% in your browser · Free on GitHub Pages · Sign-in to download
+          100% in your browser · Unlimited free download — no sign-in · Hosted on GitHub Pages
         </div>
         <h1 className="font-display font-extrabold tracking-tight text-3xl sm:text-5xl lg:text-6xl text-ink-900 leading-[1.1]">
           Free image tools that run
@@ -96,7 +96,7 @@ export function HomePage() {
           </span>
         </h1>
         <p className="mt-5 text-lg text-ink-600 max-w-2xl mx-auto">
-          Remove backgrounds, compress, resize, crop, convert and watermark images — all processed locally in your browser. Pixcuro is hosted free on GitHub Pages, so your images never touch a server. Sign in to download.
+          Remove backgrounds, compress, resize, crop, convert and watermark images — all processed locally in your browser. Pixcuro is hosted free on GitHub Pages, so your images never touch a server. Download your edited image for free — no sign-in, no account, unlimited downloads.
         </p>
 
         <div className="mt-8 max-w-xl mx-auto">
@@ -116,7 +116,7 @@ export function HomePage() {
               </span>
             )}
             <span>·</span>
-            <span>Free sign-in to download</span>
+            <span>Unlimited free download — no account needed</span>
           </div>
         </div>
       </section>
@@ -364,9 +364,9 @@ export function HomePage() {
         <div className="grid sm:grid-cols-2 gap-4">
           {[
             { q: 'Do you upload my images?', a: 'No. Every tool runs in your browser. Your image never leaves your device.' },
-            { q: 'Is Pixcuro really free?', a: 'Yes — sign in (free, Google) and you get a generous daily quota. No credit card, no trials, no expiry. Hosted on GitHub Pages.' },
+            { q: 'Is Pixcuro really free?', a: 'Yes — everything is free. No sign-in, no credit card, no daily limits, no trials. Hosted on GitHub Pages.' },
             { q: 'What about background removal quality?', a: 'We use an open-source model that runs locally. Quality is suitable for product photos, portraits and ID photos.' },
-            { q: 'Why is sign-in required for downloads?', a: 'To keep the service fast and bot-free. Processing is still done entirely in your browser — sign-in only authorizes downloads.' },
+            { q: 'Why is sign-in required for downloads?', a: 'It isn\'t. Downloads are free and unlimited for everyone — no account, no Google sign-in, no daily cap.' },
           ].map((f) => (
             <div key={f.q} className="card p-5">
               <h3 className="font-semibold text-ink-900">{f.q}</h3>
