@@ -1,12 +1,18 @@
 /**
- * Background removal using U2Net (~66 MB, much better quality than U2NetP).
+ * Background removal using U2NetP (~4.36 MB, default model).
  * Runs entirely in the browser via ONNX Runtime Web.
  * Zero server cost, unlimited use, no account required.
+ *
+ * Correct U2Net contract:
+ * - Input: float32 [1,3,320,320], RGB, NCHW
+ * - ImageNet normalization: (x - mean) / std
+ * - Output: fused saliency map, sigmoid applied
+ * - Aspect ratio preserved via letterbox padding, reversed on output
  */
 
 import * as ort from 'onnxruntime-web';
 
-const MODEL_URL = '/pixcuro/u2net.onnx';
+const MODEL_URL = '/pixcuro/u2netp.onnx';
 
 let session: ort.InferenceSession | null = null;
 let modelPromise: Promise<ort.InferenceSession> | null = null;
@@ -26,32 +32,51 @@ async function loadSession(): Promise<ort.InferenceSession> {
   return modelPromise;
 }
 
-/** Resize an ImageData to target dimensions using bilinear-ish canvas scaling. */
-function resizeImageData(
+/** Letterbox-resize imageData to fit inside targetW x targetH, preserving aspect ratio.
+ *  Returns the resized ImageData plus the padding offsets used. */
+function letterbox(
   imageData: ImageData,
   targetW: number,
   targetH: number,
-): ImageData {
+): { imageData: ImageData; padX: number; padY: number; scale: number } {
+  const { width, height } = imageData;
+  const scale = Math.min(targetW / width, targetH / height);
+  const newW = Math.round(width * scale);
+  const newH = Math.round(height * scale);
+  const padX = (targetW - newW) / 2;
+  const padY = (targetH - newH) / 2;
+
   const canvas = document.createElement('canvas');
   canvas.width = targetW;
   canvas.height = targetH;
   const ctx = canvas.getContext('2d')!;
-  const tempCanvas = document.createElement('canvas');
-  tempCanvas.width = imageData.width;
-  tempCanvas.height = imageData.height;
-  const tempCtx = tempCanvas.getContext('2d')!;
-  tempCtx.putImageData(imageData, 0, 0);
-  // Use imageSmoothingEnabled for better downscaling quality
+  ctx.fillStyle = '#000000';
+  ctx.fillRect(0, 0, targetW, targetH);
   ctx.imageSmoothingEnabled = true;
   ctx.imageSmoothingQuality = 'high';
-  ctx.drawImage(tempCanvas, 0, 0, targetW, targetH);
-  return ctx.getImageData(0, 0, targetW, targetH);
+  // Draw resized image centered (no need to draw original first)
+  const tempCanvas = document.createElement('canvas');
+  tempCanvas.width = width;
+  tempCanvas.height = height;
+  const tempCtx = tempCanvas.getContext('2d')!;
+  tempCtx.putImageData(imageData, 0, 0);
+  ctx.drawImage(tempCanvas, padX, padY, newW, newH);
+
+  return {
+    imageData: ctx.getImageData(0, 0, targetW, targetH),
+    padX,
+    padY,
+    scale,
+  };
 }
 
-/** Normalize pixels to [-1, 1] range (U2Net standard preprocessing). */
+/** Normalize pixels to [0,1] then ImageNet standardize. */
 function preprocess(imageData: ImageData): Float32Array {
   const { width, height, data } = imageData;
   const input = new Float32Array(1 * 3 * height * width); // NCHW
+
+  const mean = [0.485, 0.456, 0.406];
+  const std = [0.229, 0.224, 0.225];
 
   for (let y = 0; y < height; y++) {
     for (let x = 0; x < width; x++) {
@@ -60,10 +85,9 @@ function preprocess(imageData: ImageData): Float32Array {
       const g = data[idx + 1] / 255;
       const b = data[idx + 2] / 255;
 
-      // U2Net standard: normalize to [-1, 1]
-      input[0 * height * width + y * width + x] = (r - 0.5) / 0.5;
-      input[1 * height * width + y * width + x] = (g - 0.5) / 0.5;
-      input[2 * height * width + y * width + x] = (b - 0.5) / 0.5;
+      input[0 * height * width + y * width + x] = (r - mean[0]) / std[0];
+      input[1 * height * width + y * width + x] = (g - mean[1]) / std[1];
+      input[2 * height * width + y * width + x] = (b - mean[2]) / std[2];
     }
   }
 
@@ -75,11 +99,14 @@ function sigmoid(x: number): number {
   return 1 / (1 + Math.exp(-x));
 }
 
-/** Post-process model output into an alpha mask ImageData with edge smoothing. */
+/** Post-process model output into an alpha mask ImageData.
+ *  Removes letterbox padding and resizes to original dimensions. */
 function postprocess(
   output: Float32Array,
   origW: number,
   origH: number,
+  padX: number,
+  padY: number,
 ): ImageData {
   const modelH = 320;
   const modelW = 320;
@@ -96,16 +123,7 @@ function postprocess(
   const range = max - min + 1e-7;
 
   for (let i = 0; i < output.length; i++) {
-    // Apply sigmoid to get probability, then threshold for cleaner edges
-    const prob = sigmoid((output[i] - min) / range);
-    // Soft threshold: values near 0.5 get pushed toward edges for sharper mask
-    mask[i] = prob > 0.5 ? Math.min(1, prob * 1.2) : Math.max(0, prob * 0.8);
-  }
-
-  // Convert to byte array for canvas
-  const maskBytes = new Uint8ClampedArray(modelH * modelW);
-  for (let i = 0; i < mask.length; i++) {
-    maskBytes[i] = Math.round(mask[i] * 255);
+    mask[i] = sigmoid((output[i] - min) / range);
   }
 
   // Draw mask at model resolution
@@ -114,30 +132,39 @@ function postprocess(
   maskCanvas.height = modelH;
   const maskCtx = maskCanvas.getContext('2d')!;
   const maskImg = maskCtx.createImageData(modelW, modelH);
-  for (let i = 0; i < maskBytes.length; i++) {
-    maskImg.data[i * 4] = maskBytes[i];
-    maskImg.data[i * 4 + 1] = maskBytes[i];
-    maskImg.data[i * 4 + 2] = maskBytes[i];
+  for (let i = 0; i < mask.length; i++) {
+    const v = Math.round(mask[i] * 255);
+    maskImg.data[i * 4] = v;
+    maskImg.data[i * 4 + 1] = v;
+    maskImg.data[i * 4 + 2] = v;
     maskImg.data[i * 4 + 3] = 255;
   }
   maskCtx.putImageData(maskImg, 0, 0);
 
-  // Resize mask to original dimensions with smoothing
+  // Crop out the letterbox padding
+  const cropCanvas = document.createElement('canvas');
+  cropCanvas.width = modelW;
+  cropCanvas.height = modelH;
+  const cropCtx = cropCanvas.getContext('2d')!;
+  cropCtx.drawImage(
+    maskCanvas,
+    padX, padY, modelW - padX * 2, modelH - padY * 2,
+    0, 0, modelW - padX * 2, modelH - padY * 2,
+  );
+
+  // Resize cropped mask to original image dimensions
   const outCanvas = document.createElement('canvas');
   outCanvas.width = origW;
   outCanvas.height = origH;
   const outCtx = outCanvas.getContext('2d')!;
   outCtx.imageSmoothingEnabled = true;
   outCtx.imageSmoothingQuality = 'high';
-  outCtx.drawImage(maskCanvas, 0, 0, origW, origH);
+  outCtx.drawImage(cropCanvas, 0, 0, origW, origH);
   return outCtx.getImageData(0, 0, origW, origH);
 }
 
-/** Composite original RGBA image with alpha mask. */
-function composite(
-  original: ImageData,
-  alpha: ImageData,
-): ImageData {
+/** Composite original RGBA image with alpha mask. Keeps transparent pixels genuinely transparent. */
+function composite(original: ImageData, alpha: ImageData): ImageData {
   const { width, height, data } = original;
   const result = new Uint8ClampedArray(data.length);
 
@@ -145,7 +172,7 @@ function composite(
     result[i] = data[i];     // R
     result[i + 1] = data[i + 1]; // G
     result[i + 2] = data[i + 2]; // B
-    result[i + 3] = alpha.data[i]; // A from mask
+    result[i + 3] = alpha.data[i]; // A from mask (never inverted)
   }
 
   return new ImageData(result, width, height);
@@ -182,11 +209,11 @@ export async function removeImageBackground(
 
   onProgress?.(0.20);
 
-  // Resize to 320x320 for model input
-  const resized = resizeImageData(imageData, 320, 320);
+  // Letterbox-resize to 320x320 preserving aspect ratio
+  const { imageData: resized, padX, padY } = letterbox(imageData, 320, 320);
   onProgress?.(0.30);
 
-  // Preprocess
+  // Preprocess with ImageNet normalization
   const input = preprocess(resized);
   onProgress?.(0.40);
 
@@ -194,7 +221,7 @@ export async function removeImageBackground(
   const sess = await loadSession();
   onProgress?.(0.60);
 
-  // Dynamically discover the model's input name
+  // Dynamically discover input/output names
   const inputNames = sess.inputNames;
   const inputName = inputNames.length > 0 ? inputNames[0] : 'input1';
 
@@ -211,14 +238,14 @@ export async function removeImageBackground(
   const outputData = output.data as Float32Array;
   onProgress?.(0.85);
 
-  // Postprocess: resize mask back to original size with smoothing
-  const alphaMask = postprocess(outputData, origW, origH);
+  // Postprocess: remove padding, resize to original dimensions
+  const alphaMask = postprocess(outputData, origW, origH, padX, padY);
   onProgress?.(0.90);
 
   // Composite
   const resultImageData = composite(imageData, alphaMask);
 
-  // Draw result to canvas and export as PNG blob
+  // Export as PNG blob
   const outCanvas = document.createElement('canvas');
   outCanvas.width = origW;
   outCanvas.height = origH;
@@ -252,9 +279,10 @@ function loadImage(file: File): Promise<HTMLImageElement> {
   });
 }
 
-export function getModelStatus(): { loaded: boolean; model: string } {
+export function getModelStatus(): { loaded: boolean; model: string; sizeMB: number } {
   return {
     loaded: session !== null,
-    model: 'U2Net (~66 MB)',
+    model: 'U2NetP',
+    sizeMB: 4.36,
   };
 }
