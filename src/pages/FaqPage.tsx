@@ -8,7 +8,7 @@ const FAQ = [
   },
   {
     q: 'Is Pixcuro really free?',
-    a: 'Yes — sign in (free, Google) and you get a generous daily quota. No credit card, no trials, no expiry.',
+    a: 'Yes — everything is free. No sign-in, no credit card, no daily limits, no trials.',
   },
   {
     q: 'How does the background remover work without uploading?',
