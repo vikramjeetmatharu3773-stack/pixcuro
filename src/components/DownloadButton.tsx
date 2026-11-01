@@ -26,17 +26,6 @@ function fmtDesc(format: DownloadFormat): string {
   return 'Modern format, great compression';
 }
 
-/**
- * Detect likely automated/bot usage patterns:
- *  - Headless browser fingerprints
- *  - WebDriver / Selenium markers
- *  - Missing / inconsistent language
- *  - Abnormal touch + no mouse (very common in bots)
- *
- * Soft-block: the prompt still allows manual override via sign-in
- * since legitimate users on locked-down corporate machines can trip
- * some signals too.
- */
 export function DownloadButton({
   primary,
   alternates = {},
