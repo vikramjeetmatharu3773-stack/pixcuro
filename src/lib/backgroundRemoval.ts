@@ -177,14 +177,20 @@ export async function removeImageBackground(
   const sess = await loadSession();
   onProgress?.(0.65);
 
+  // Dynamically discover the model's input name (U2NetP may use 'input', 'input1', etc.)
+  const inputNames = sess.inputNames;
+  const inputName = inputNames.length > 0 ? inputNames[0] : 'input1';
+
   const feeds: Record<string, ort.Tensor> = {
-    'input1': new ort.Tensor(input, [1, 3, 320, 320]),
+    [inputName]: new ort.Tensor(input, [1, 3, 320, 320]),
   };
 
   const results = await sess.run(feeds);
   onProgress?.(0.80);
 
-  const output = results['0'] as ort.Tensor;
+  const outputNames = sess.outputNames;
+  const outputName = outputNames.length > 0 ? outputNames[0] : '0';
+  const output = results[outputName] as ort.Tensor;
   const outputData = output.data as Float32Array;
   onProgress?.(0.85);
 
