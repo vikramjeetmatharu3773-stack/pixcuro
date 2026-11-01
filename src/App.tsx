@@ -1,7 +1,6 @@
 import { lazy, Suspense, type ReactNode } from 'react';
 import { createBrowserRouter, RouterProvider } from 'react-router-dom';
 import { Layout } from './components/Layout';
-import { AuthProvider } from './components/AuthProvider';
 import { HomePage } from './pages/HomePage';
 import { ToolsIndexPage } from './pages/ToolsIndexPage';
 import { AboutPage } from './pages/AboutPage';
@@ -10,7 +9,6 @@ import { TermsPage } from './pages/TermsPage';
 import { ContactPage } from './pages/ContactPage';
 import { FaqPage } from './pages/FaqPage';
 import { NotFoundPage } from './pages/NotFoundPage';
-import { AuthCallbackPage } from './pages/AuthCallbackPage';
 
 // Lazy-load each tool page so the @imgly/background-removal bundle only ships
 // when a user actually visits a tool page (esp. background-remover).
@@ -87,13 +85,12 @@ const routes = [
       { path: 'batch-resize', element: <Suspense fallback={<PageFallback />}><BatchResizePage /></Suspense> },
       { path: 'batch-convert', element: <Suspense fallback={<PageFallback />}><BatchConvertPage /></Suspense> },
       { path: '*', element: <NotFoundPage /> },
-      { path: 'auth/callback', element: <AuthCallbackPage /> },
     ],
   },
 ];
 
 function RootProviders({ children }: { children: ReactNode }) {
-  return <AuthProvider>{children}</AuthProvider>;
+  return <>{children}</>;
 }
 
 const router = createBrowserRouter(routes, { basename: '/pixcuro' });
