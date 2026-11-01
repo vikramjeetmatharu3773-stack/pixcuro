@@ -1,10 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { saveAs } from 'file-saver';
-import { tryConsumeDownloadToken, getUsage, RATE_LIMITS } from '../lib/rateLimit';
 import { formatBytes, type ProcessResult } from '../lib/imageOps';
 import { downloadPdf } from '../lib/pdf';
-import { SignInPrompt } from './SignInPrompt';
-import { useAuth } from './AuthProvider';
 
 export type DownloadFormat = 'image/png' | 'image/jpeg' | 'image/webp';
 
@@ -40,20 +37,6 @@ function fmtDesc(format: DownloadFormat): string {
  * since legitimate users on locked-down corporate machines can trip
  * some signals too.
  */
-function isLikelyBot(): boolean {
-  if (typeof navigator === 'undefined') return false;
-  const ua = navigator.userAgent || '';
-  const w = window as any;
-  const signals: boolean[] = [
-    /HeadlessChrome|Puppeteer|PhantomJS|Selenium|Playwright/i.test(ua),
-    !!w.document?.documentElement?.getAttribute('webdriver'),
-    !!w.callPhantom || !!w._phantom,
-    (navigator.languages?.length ?? 0) === 0,
-  ];
-  // Only flag if 2+ signals to avoid false positives
-  return signals.filter(Boolean).length >= 2;
-}
-
 export function DownloadButton({
   primary,
   alternates = {},
@@ -64,11 +47,7 @@ export function DownloadButton({
 }: DownloadButtonProps) {
   const [open, setOpen] = useState(false);
   const [busy, setBusy] = useState(false);
-  const [signInOpen, setSignInOpen] = useState(false);
-  const [signInReason, setSignInReason] = useState<string>('rate-limit');
-  const [limitInfo, setLimitInfo] = useState(getUsage());
   const ref = useRef<HTMLDivElement>(null);
-  const { signedIn } = useAuth();
 
   useEffect(() => {
     if (!open) return;
@@ -79,10 +58,6 @@ export function DownloadButton({
     return () => window.removeEventListener('mousedown', onClick);
   }, [open]);
 
-  useEffect(() => {
-    setLimitInfo(getUsage());
-  }, [signInOpen, signedIn]);
-
   const altEntries = Object.entries(alternates).filter(([, v]) => !!v) as [DownloadFormat, ProcessResult][];
   const hasMenu = altEntries.length > 0 || !!pdf;
 
@@ -91,30 +66,7 @@ export function DownloadButton({
     ? 'bg-brand-600 text-white hover:bg-brand-700 shadow-soft'
     : 'bg-white text-ink-900 border border-ink-200 hover:bg-ink-50';
 
-  const gateDownload = (): boolean => {
-    if (isLikelyBot()) {
-      setSignInReason('bot-detected');
-      setSignInOpen(true);
-      return false;
-    }
-    if (!signedIn) {
-      setSignInReason('anonymous');
-      setSignInOpen(true);
-      return false;
-    }
-    if (!tryConsumeDownloadToken()) {
-      setSignInReason('rate-limit');
-      setSignInOpen(true);
-      return false;
-    }
-    return true;
-  };
-
   const triggerDownload = async (result: ProcessResult) => {
-    if (!gateDownload()) {
-      setOpen(false);
-      return;
-    }
     setBusy(true);
     try {
       const name = filename ?? result.name;
@@ -126,10 +78,6 @@ export function DownloadButton({
   };
 
   const triggerPdf = async () => {
-    if (!gateDownload()) {
-      setOpen(false);
-      return;
-    }
     setBusy(true);
     try {
       const { images, opts } = await pdf!.build();
@@ -166,13 +114,6 @@ export function DownloadButton({
     return (
       <>
         {triggerBtn(() => triggerDownload(primary), 'rounded-xl', `Download ${label ?? 'result'}`)}
-        <SignInPrompt
-          open={signInOpen}
-          onClose={() => setSignInOpen(false)}
-          reason={signInReason}
-          remainingToday={limitInfo.remainingToday}
-          dailyLimit={RATE_LIMITS.DAILY_LIMIT}
-        />
       </>
     );
   }
@@ -237,13 +178,6 @@ export function DownloadButton({
           </div>
         )}
       </div>
-      <SignInPrompt
-        open={signInOpen}
-        onClose={() => setSignInOpen(false)}
-        reason={signInReason}
-        remainingToday={limitInfo.remainingToday}
-        dailyLimit={RATE_LIMITS.DAILY_LIMIT}
-      />
     </>
   );
 }
