@@ -21,7 +21,7 @@ export function AboutPage() {
       <p className="text-ink-700 mt-4">
         {SITE.name} is a small, focused image toolkit built around one idea:
         your photos should stay on your device. Every tool — the background remover, compressor, resizer,
-        cropper and converter — runs locally in your browser using open-source technologies. There is no upload, and no tracking of your images. Downloads require a free sign-in to keep the service fast and abuse-free.</p>
+        cropper and converter — runs locally in your browser using open-source technologies. There is no upload, no tracking of your images, and downloads are completely free — no account required.</p>
 
       <h2 className="font-display font-bold text-xl mt-8 mb-2 text-ink-900">Why we built it</h2>
       <p className="text-ink-700">
