@@ -160,16 +160,16 @@ export function HomePage() {
               tint: 'bg-ink-900 text-white',
             },
             {
-              label: 'Sign-in to download',
-              sub: 'No bot abuse',
+              label: 'Unlimited free download',
+              sub: 'No account needed',
               icon: (
                 <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                  <circle cx="12" cy="8" r="4" />
-                  <path d="M4 21v-1a6 6 0 0 1 6-6h4a6 6 0 0 1 6 6v1" />
-                  <path d="M17.5 8l1.8 1.8L22 7" strokeWidth="2.2" />
+                  <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+                  <polyline points="7 10 12 15 17 10" />
+                  <line x1="12" y1="15" x2="12" y2="3" />
                 </svg>
               ),
-              tint: 'bg-amber-100 text-amber-700',
+              tint: 'bg-green-100 text-green-700',
             },
           ].map((b) => (
             <div key={b.label} className="card px-4 py-3.5 flex items-center gap-3">
@@ -187,7 +187,7 @@ export function HomePage() {
       <section className="container-wide pb-16">
         <h2 className="font-display font-bold text-xl sm:text-2xl lg:text-3xl text-ink-900 mb-2">All tools</h2>
         <p className="text-ink-600 mb-8 max-w-2xl">
-          Every tool below runs entirely in your browser. Sign in (free, Google) to download the result.
+          Every tool below runs entirely in your browser. Download results free — no sign-in needed.
         </p>
         <div className="space-y-12">
           {categoryOrder.map((cat) => {
@@ -346,7 +346,7 @@ export function HomePage() {
             {[
               { n: 1, title: 'Upload', text: 'Drop, click, or paste an image. Files are processed locally — they never leave your device.' },
               { n: 2, title: 'Process', text: 'Choose a tool and adjust settings with sliders, presets or a color picker. Changes preview live.' },
-              { n: 3, title: 'Download', text: 'Sign in (free) and click Download. Pick PNG, JPG or WebP. PDF for printable sheets.' },
+              { n: 3, title: 'Download', text: 'Click Download. Pick PNG, JPG or WebP. PDF for printable sheets.' },
             ].map((s) => (
               <div key={s.n} className="card p-6">
                 <div className="w-10 h-10 rounded-xl bg-brand-100 text-brand-700 flex items-center justify-center font-bold text-lg">{s.n}</div>
