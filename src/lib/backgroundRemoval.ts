@@ -1,12 +1,12 @@
 /**
- * Background removal using U2NetP (lightest U2Net variant, ~4.7 MB model).
+ * Background removal using U2Net (~66 MB, much better quality than U2NetP).
  * Runs entirely in the browser via ONNX Runtime Web.
  * Zero server cost, unlimited use, no account required.
  */
 
 import * as ort from 'onnxruntime-web';
 
-const MODEL_URL = '/pixcuro/u2netp.onnx';
+const MODEL_URL = '/pixcuro/u2net.onnx';
 
 let session: ort.InferenceSession | null = null;
 let modelPromise: Promise<ort.InferenceSession> | null = null;
@@ -26,7 +26,7 @@ async function loadSession(): Promise<ort.InferenceSession> {
   return modelPromise;
 }
 
-/** Resize an ImageData to target dimensions using a canvas. */
+/** Resize an ImageData to target dimensions using bilinear-ish canvas scaling. */
 function resizeImageData(
   imageData: ImageData,
   targetW: number,
@@ -41,18 +41,17 @@ function resizeImageData(
   tempCanvas.height = imageData.height;
   const tempCtx = tempCanvas.getContext('2d')!;
   tempCtx.putImageData(imageData, 0, 0);
+  // Use imageSmoothingEnabled for better downscaling quality
+  ctx.imageSmoothingEnabled = true;
+  ctx.imageSmoothingQuality = 'high';
   ctx.drawImage(tempCanvas, 0, 0, targetW, targetH);
   return ctx.getImageData(0, 0, targetW, targetH);
 }
 
-/** Normalize pixels to [0,1] then standardize with U2Net mean/std. */
+/** Normalize pixels to [-1, 1] range (U2Net standard preprocessing). */
 function preprocess(imageData: ImageData): Float32Array {
   const { width, height, data } = imageData;
   const input = new Float32Array(1 * 3 * height * width); // NCHW
-
-  // U2NetP mean/std (ImageNet)
-  const mean = [0.485, 0.456, 0.406];
-  const std = [0.229, 0.224, 0.225];
 
   for (let y = 0; y < height; y++) {
     for (let x = 0; x < width; x++) {
@@ -61,9 +60,10 @@ function preprocess(imageData: ImageData): Float32Array {
       const g = data[idx + 1] / 255;
       const b = data[idx + 2] / 255;
 
-      input[0 * height * width + y * width + x] = (r - mean[0]) / std[0];
-      input[1 * height * width + y * width + x] = (g - mean[1]) / std[1];
-      input[2 * height * width + y * width + x] = (b - mean[2]) / std[2];
+      // U2Net standard: normalize to [-1, 1]
+      input[0 * height * width + y * width + x] = (r - 0.5) / 0.5;
+      input[1 * height * width + y * width + x] = (g - 0.5) / 0.5;
+      input[2 * height * width + y * width + x] = (b - 0.5) / 0.5;
     }
   }
 
@@ -75,7 +75,7 @@ function sigmoid(x: number): number {
   return 1 / (1 + Math.exp(-x));
 }
 
-/** Post-process model output into an alpha mask ImageData. */
+/** Post-process model output into an alpha mask ImageData with edge smoothing. */
 function postprocess(
   output: Float32Array,
   origW: number,
@@ -83,9 +83,9 @@ function postprocess(
 ): ImageData {
   const modelH = 320;
   const modelW = 320;
-  const mask = new Uint8ClampedArray(modelH * modelW);
+  const mask = new Float32Array(modelH * modelW);
 
-  // Find min/max for normalization
+  // Normalize output to [0, 1]
   let min = output[0];
   let max = output[0];
   for (let i = 1; i < output.length; i++) {
@@ -96,22 +96,39 @@ function postprocess(
   const range = max - min + 1e-7;
 
   for (let i = 0; i < output.length; i++) {
-    mask[i] = Math.round(sigmoid((output[i] - min) / range) * 255);
+    // Apply sigmoid to get probability, then threshold for cleaner edges
+    const prob = sigmoid((output[i] - min) / range);
+    // Soft threshold: values near 0.5 get pushed toward edges for sharper mask
+    mask[i] = prob > 0.5 ? Math.min(1, prob * 1.2) : Math.max(0, prob * 0.8);
   }
 
-  // Resize mask to original dimensions
+  // Convert to byte array for canvas
+  const maskBytes = new Uint8ClampedArray(modelH * modelW);
+  for (let i = 0; i < mask.length; i++) {
+    maskBytes[i] = Math.round(mask[i] * 255);
+  }
+
+  // Draw mask at model resolution
   const maskCanvas = document.createElement('canvas');
   maskCanvas.width = modelW;
   maskCanvas.height = modelH;
   const maskCtx = maskCanvas.getContext('2d')!;
   const maskImg = maskCtx.createImageData(modelW, modelH);
-  maskImg.data.set(mask);
+  for (let i = 0; i < maskBytes.length; i++) {
+    maskImg.data[i * 4] = maskBytes[i];
+    maskImg.data[i * 4 + 1] = maskBytes[i];
+    maskImg.data[i * 4 + 2] = maskBytes[i];
+    maskImg.data[i * 4 + 3] = 255;
+  }
   maskCtx.putImageData(maskImg, 0, 0);
 
+  // Resize mask to original dimensions with smoothing
   const outCanvas = document.createElement('canvas');
   outCanvas.width = origW;
   outCanvas.height = origH;
   const outCtx = outCanvas.getContext('2d')!;
+  outCtx.imageSmoothingEnabled = true;
+  outCtx.imageSmoothingQuality = 'high';
   outCtx.drawImage(maskCanvas, 0, 0, origW, origH);
   return outCtx.getImageData(0, 0, origW, origH);
 }
@@ -150,7 +167,7 @@ export async function removeImageBackground(
 
   // Load image
   const img = await loadImage(file);
-  onProgress?.(0.15);
+  onProgress?.(0.10);
 
   const origW = img.naturalWidth;
   const origH = img.naturalHeight;
@@ -163,21 +180,21 @@ export async function removeImageBackground(
   ctx.drawImage(img, 0, 0);
   const imageData = ctx.getImageData(0, 0, origW, origH);
 
-  onProgress?.(0.25);
+  onProgress?.(0.20);
 
   // Resize to 320x320 for model input
   const resized = resizeImageData(imageData, 320, 320);
-  onProgress?.(0.35);
+  onProgress?.(0.30);
 
   // Preprocess
   const input = preprocess(resized);
-  onProgress?.(0.45);
+  onProgress?.(0.40);
 
   // Run model
   const sess = await loadSession();
-  onProgress?.(0.65);
+  onProgress?.(0.60);
 
-  // Dynamically discover the model's input name (U2NetP may use 'input', 'input1', etc.)
+  // Dynamically discover the model's input name
   const inputNames = sess.inputNames;
   const inputName = inputNames.length > 0 ? inputNames[0] : 'input1';
 
@@ -194,7 +211,7 @@ export async function removeImageBackground(
   const outputData = output.data as Float32Array;
   onProgress?.(0.85);
 
-  // Postprocess: resize mask back to original size
+  // Postprocess: resize mask back to original size with smoothing
   const alphaMask = postprocess(outputData, origW, origH);
   onProgress?.(0.90);
 
@@ -238,6 +255,6 @@ function loadImage(file: File): Promise<HTMLImageElement> {
 export function getModelStatus(): { loaded: boolean; model: string } {
   return {
     loaded: session !== null,
-    model: 'U2NetP (~4.7 MB)',
+    model: 'U2Net (~66 MB)',
   };
 }
