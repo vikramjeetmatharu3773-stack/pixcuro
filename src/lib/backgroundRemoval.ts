@@ -178,7 +178,7 @@ export async function removeImageBackground(
   onProgress?.(0.65);
 
   const feeds: Record<string, ort.Tensor> = {
-    input: new ort.Tensor(input, [1, 3, 320, 320]),
+    'input1': new ort.Tensor(input, [1, 3, 320, 320]),
   };
 
   const results = await sess.run(feeds);
